@@ -24,9 +24,10 @@ RUN echo $TZ > /etc/timezone && apt-get update && \
 # Set environment variables to optimize Python runtime
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=$APP_HOME
 
 # Poetry environment variables (fixed typo)
-ENV POETRY_VERSION=2.1.1
+ENV POETRY_VERSION=2.2.1
 ENV POETRY_HOME=$APP_HOME/poetry
 ENV POETRY_VENV=$APP_HOME/poetry-venv
 ENV POETRY_CACHE_DIR=$APP_HOME/.poetry-cache

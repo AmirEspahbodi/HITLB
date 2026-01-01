@@ -18,6 +18,13 @@ fileConfig(config.config_file_name)
 # target_metadata = mymodel.Base.metadata
 # target_metadata = None
 
+import sys
+from pathlib import Path
+
+# Add the project root directory to the python path
+# This assumes env.py is in app/alembic/
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
 from app.models import SQLModel  # noqa
 from app.core.config import settings # noqa
 

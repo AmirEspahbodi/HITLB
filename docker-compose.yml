@@ -1,64 +1,55 @@
-version: "3.9"
-
 services:
-    web:
-        build: .
-        command: poetry run uvicorn app.main:app --host 0.0.0.0 --port 3000 --reload
-        volumes:
-            - .:/dornica_test
-        ports:
-            - 3000:3000
-        env_file:
-            - ./.env
-        depends_on:
-            - db
-        links:
-            - "db:pgsql-server"
-
-    db:
-        image: postgres:18.1-alpine3.23
-        container_name: postgres
-        restart: always
-        healthcheck:
-            test:
-                [
-                    "CMD-SHELL",
-                    "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}",
-                ]
-            interval: 10s
-            retries: 5
-            start_period: 30s
-            timeout: 10s
-        volumes:
-            - app-db-data:/var/lib/postgresql/dataa
-        env_file:
-            - .env
-        environment:
-            - PGDATA=/var/lib/postgresql/dataa
-            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
-            - POSTGRES_USER=${POSTGRES_USER?Variable not set}
-            - POSTGRES_DB=${POSTGRES_DB?Variable not set}
-        ports:
-            - "8080:5432"
-
-    pgadmin:
-        container_name: pgadmin
-        image: dpage/pgadmin4
-        restart: always
-        environment:
-            - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_USER?Variable not set}
-            - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD?Variable not set}
-        ports:
-            - "8088:80"
-        volumes:
-            - pgadmin-data:/var/lib/pgadmin
-        depends_on:
-            - db
-        links:
-            - "db:pgsql-server"
-        env_file:
-            - ./.env
-
+  web:
+    build: .
+    command: poetry run uvicorn app.main:app --host 0.0.0.0 --port 3000 --reload
+    volumes:
+      - .:/home/python_user
+    ports:
+      - 3000:3000
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+    links:
+      - "db:pgsql-server"
+  db:
+    image: postgres:18.1-alpine3.23
+    container_name: postgres
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    volumes:
+      - app-db-data:/var/lib/postgresql/dataa
+    env_file:
+      - .env
+    environment:
+      - PGDATA=/var/lib/postgresql/dataa
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
+      - POSTGRES_DB=${POSTGRES_DB?Variable not set}
+    ports:
+      - "8080:5432"
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_USER?Variable not set}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD?Variable not set}
+    ports:
+      - "8088:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - db
+    links:
+      - "db:pgsql-server"
+    env_file:
+      - ./.env
 volumes:
-    app-db-data:
-    pgadmin-data:
+  app-db-data:
+  pgadmin-data:
