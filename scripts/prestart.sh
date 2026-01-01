@@ -7,6 +7,8 @@ set -x
 poetry run python -m app.backend_pre_start
 
 # Run migrations
+poetry run alembic revision --autogenerate -m "New Migration"
+
 poetry run alembic upgrade head
 
 # Create initial data in DB

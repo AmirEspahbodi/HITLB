@@ -3,6 +3,7 @@ import warnings
 from typing import Annotated, Any, Literal
 
 from pydantic import (
+    AnyHttpUrl,
     AnyUrl,
     BeforeValidator,
     EmailStr,
@@ -34,12 +35,14 @@ class Settings(BaseSettings):
     SECRET_KEY: str = secrets.token_urlsafe(32)
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
-    FRONTEND_HOST: str = "http://localhost:5173"
+    FRONTEND_HOST: str = "http://localhost:3333"
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
-    BACKEND_CORS_ORIGINS: Annotated[list[AnyUrl] | str, BeforeValidator(parse_cors)] = [
-        "http://localhost:3333",
-        "http://localhost:5173",
+    BACKEND_CORS_ORIGINS: Annotated[
+        list[AnyHttpUrl] | str, BeforeValidator(parse_cors)
+    ] = [
+        AnyHttpUrl("http://localhost:3333"),
+        AnyHttpUrl("http://localhost:5173"),
     ]
 
     @computed_field  # type: ignore[prop-decorator]
