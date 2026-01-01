@@ -77,4 +77,6 @@ COPY --chown=$APP_USER:$APP_USER app/ $APP_HOME/app/
 COPY --chown=$APP_USER:$APP_USER scripts/ $APP_HOME/scripts/
 COPY --chown=$APP_USER:$APP_USER alembic.ini $APP_HOME/alembic.ini
 
+RUN chmod +x $APP_HOME/scripts/*
+
 EXPOSE 8000
