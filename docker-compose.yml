@@ -26,6 +26,7 @@ services:
       - app-db-data:/var/lib/postgresql/dataa
     env_file:
       - .env
+
     environment:
       - PGDATA=/var/lib/postgresql/dataa
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
