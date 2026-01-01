@@ -41,10 +41,13 @@ class UpdatePassword(SQLModel):
 
 
 class UserCommentRevision(SQLModel, table=True):
-    user_id: uuid.UUID = Field(foreign_key="user.id", primary_key=True)
-    comment_id: int = Field(foreign_key="comment.id", primary_key=True)
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(foreign_key="user.id")
+    comment_id: int = Field(foreign_key="comment.id")
+    principle_id: int = Field(foreign_key="principle.id")
     expert_opinion: str | None = None
-    revised_at: datetime | None = None
+    updated_at: datetime | None = None
+    created_at: datetime | None = None
 
 
 # Database model, database table inferred from class name
