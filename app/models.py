@@ -18,12 +18,6 @@ class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=128)
 
 
-class UserRegister(SQLModel):
-    email: EmailStr = Field(max_length=255)
-    password: str = Field(min_length=8, max_length=128)
-    full_name: str | None = Field(default=None, max_length=255)
-
-
 # Properties to receive via API on update, all are optional
 class UserUpdate(UserBase):
     email: EmailStr | None = Field(default=None, max_length=255)  # type: ignore
@@ -62,11 +56,6 @@ class User(UserBase, table=True):
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
     id: uuid.UUID
-
-
-class UsersPublic(SQLModel):
-    data: list[UserPublic]
-    count: int
 
 
 # Generic message
@@ -133,3 +122,10 @@ class CommentUpdate(UserBase):
     reviser_id: int | None
     principle_id: int | None
     revision_timestamp: datetime | None = None
+
+
+class PasswordResetToken(SQLModel, table=True):
+    token_hash: str = Field(primary_key=True)
+    email: str
+    used: bool = False
+    created_at: datetime

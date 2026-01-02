@@ -4,6 +4,7 @@ services:
     command: poetry run uvicorn app.main:app --host 0.0.0.0 --port 3000 --reload
     volumes:
       - ./app/:/home/python_user/app
+      - ./pyproject.toml:/home/python_user/pyproject.toml
     ports:
       - 3000:3000
     env_file:
@@ -33,7 +34,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_DB=${POSTGRES_DB?Variable not set}
     ports:
-      - "8080:5432"
+      - "127.0.0.1:8080:5432"
   pgadmin:
     container_name: pgadmin
     image: dpage/pgadmin4
@@ -42,7 +43,7 @@ services:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_USER?Variable not set}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD?Variable not set}
     ports:
-      - "8088:80"
+      - "127.0.0.1:8088:5432"
     volumes:
       - pgadmin-data:/var/lib/pgadmin
     depends_on:

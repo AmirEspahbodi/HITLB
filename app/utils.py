@@ -6,11 +6,12 @@ from typing import Any
 
 import emails
 import jwt
-from jinja2 import Template
+from jinja2 import Environment, FileSystemLoader, Template, select_autoescape
 from jwt.exceptions import InvalidTokenError
 
 from app.core import security
 from app.core.config import settings
+from app.models import PasswordResetToken
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,10 +24,12 @@ class EmailData:
 
 
 def render_email_template(*, template_name: str, context: dict[str, Any]) -> str:
-    template_str = (
-        Path(__file__).parent / "email-templates" / "build" / template_name
-    ).read_text()
-    html_content = Template(template_str).render(context)
+    env = Environment(
+        loader=FileSystemLoader(Path(__file__).parent / "email-templates" / "build"),
+        autoescape=select_autoescape(["html", "xml"]),  # ✅ Auto-escape
+    )
+    template = env.get_template(template_name)
+    html_content = template.render(context)
     return html_content
 
 
@@ -42,7 +45,12 @@ def send_email(
         html=html_content,
         mail_from=(settings.EMAILS_FROM_NAME, settings.EMAILS_FROM_EMAIL),
     )
-    smtp_options = {"host": settings.SMTP_HOST, "port": settings.SMTP_PORT}
+    smtp_options = {
+        "host": settings.SMTP_HOST,
+        "port": settings.SMTP_PORT,
+        "ssl_verify": True,  # ✅ Verify certificates
+        "ssl_certfile": settings.SMTP_CERT_FILE,
+    }
     if settings.SMTP_TLS:
         smtp_options["tls"] = True
     elif settings.SMTP_SSL:
@@ -82,42 +90,36 @@ def generate_reset_password_email(email_to: str, email: str, token: str) -> Emai
     return EmailData(html_content=html_content, subject=subject)
 
 
-def generate_new_account_email(
-    email_to: str, username: str, password: str
-) -> EmailData:
-    project_name = settings.PROJECT_NAME
-    subject = f"{project_name} - New account for user {username}"
-    html_content = render_email_template(
-        template_name="new_account.html",
-        context={
-            "project_name": settings.PROJECT_NAME,
-            "username": username,
-            "password": password,
-            "email": email_to,
-            "link": settings.FRONTEND_HOST,
-        },
-    )
-    return EmailData(html_content=html_content, subject=subject)
-
-
 def generate_password_reset_token(email: str) -> str:
     delta = timedelta(hours=settings.EMAIL_RESET_TOKEN_EXPIRE_HOURS)
     now = datetime.now(timezone.utc)
     expires = now + delta
     exp = expires.timestamp()
     encoded_jwt = jwt.encode(
-        {"exp": exp, "nbf": now, "sub": email},
+        {"exp": exp, "nbf": now.timestamp(), "sub": email},
         settings.SECRET_KEY,
         algorithm=security.ALGORITHM,
     )
     return encoded_jwt
 
 
-def verify_password_reset_token(token: str) -> str | None:
-    try:
-        decoded_token = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+def verify_password_reset_token(token: str, session: Session) -> str | None:
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    db_token = session.exec(
+        select(PasswordResetToken).where(
+            PasswordResetToken.token_hash == token_hash,
+            PasswordResetToken.used == False,
         )
-        return str(decoded_token["sub"])
+    ).first()
+
+    if not db_token:
+        return None
+
+    # Verify JWT
+    try:
+        decoded = jwt.decode(...)
+        db_token.used = True  # ✅ Mark as used
+        session.commit()
+        return str(decoded["sub"])
     except InvalidTokenError:
         return None

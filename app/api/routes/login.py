@@ -1,9 +1,12 @@
 from datetime import timedelta
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request  # ✅ Import Request
 from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from limits import parse  # ✅ Import parse to create the limit rule
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app import crud
 from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
@@ -18,16 +21,38 @@ from app.utils import (
     verify_password_reset_token,
 )
 
+limiter = Limiter(key_func=get_remote_address)
+
 router = APIRouter(tags=["login"])
 
 
 @router.post("/login/access-token")
+# ❌ Remove the decorator @limiter.limit("5/minute")
+# We handle it manually inside to access form_data
 def login_access_token(
-    session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+    request: Request,
+    session: SessionDep,
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ) -> Token:
     """
     OAuth2 compatible token login, get an access token for future requests
     """
+
+    # ✅ 1. Rate Limit Logic: Limit by Username
+    # We create a unique key for this user: "login:username"
+    # We use the existing limiter storage to track hits.
+    limit_key = f"login:{form_data.username}"
+    limit_rule = parse("5/minute")
+
+    # limiter.limiter is the internal strategy (e.g., FixedWindow).
+    # .hit() returns True if allowed, False if limit exceeded.
+    if not limiter.limiter.hit(limit_rule, limit_key):
+        # Optional: Log the attempt here
+        raise HTTPException(
+            status_code=429, detail="Too many login attempts. Please try again later."
+        )
+
+    # ✅ 2. Authentication Logic (Only runs if rate limit passes)
     user = crud.authenticate(
         session=session, email=form_data.username, password=form_data.password
     )
@@ -35,6 +60,7 @@ def login_access_token(
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return Token(
         access_token=security.create_access_token(
@@ -51,28 +77,24 @@ def test_token(current_user: CurrentUser) -> Any:
     return current_user
 
 
+# In login.py
 @router.post("/password-recovery/{email}")
 def recover_password(email: str, session: SessionDep) -> Message:
-    """
-    Password Recovery
-    """
     user = crud.get_user_by_email(session=session, email=email)
 
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="The user with this email does not exist in the system.",
+    if user:  # Only send email if user exists
+        password_reset_token = generate_password_reset_token(email=email)
+        email_data = generate_reset_password_email(
+            email_to=user.email, email=email, token=password_reset_token
         )
-    password_reset_token = generate_password_reset_token(email=email)
-    email_data = generate_reset_password_email(
-        email_to=user.email, email=email, token=password_reset_token
-    )
-    send_email(
-        email_to=user.email,
-        subject=email_data.subject,
-        html_content=email_data.html_content,
-    )
-    return Message(message="Password recovery email sent")
+        send_email(
+            email_to=user.email,
+            subject=email_data.subject,
+            html_content=email_data.html_content,
+        )
+
+    # ✅ Always return same message
+    return Message(message="If that email exists, a recovery link has been sent")
 
 
 @router.post("/reset-password/")
