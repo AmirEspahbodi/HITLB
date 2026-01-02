@@ -1,5 +1,3 @@
-import os
-import secrets
 import warnings
 from typing import Annotated, Any, Literal
 
@@ -33,15 +31,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = Field(default_factory=lambda: secrets.token_urlsafe(32))
-
-    @model_validator(mode="after")
-    def _validate_secret_key(self) -> Self:
-        if not os.getenv("SECRET_KEY"):
-            raise ValueError(
-                "SECRET_KEY must be set in environment variables for production"
-            )
-        return self
+    SECRET_KEY: str = Field(min_length=1)
 
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
