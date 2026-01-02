@@ -1,0 +1,175 @@
+# ============================================================================
+# Docker Ignore File - Prevents Sensitive Files from Being Copied to Image
+# ============================================================================
+# CRITICAL: This file prevents secrets from being baked into Docker images
+# Last Updated: 2026-01-02
+# ============================================================================
+
+# ============================================================================
+# ENVIRONMENT FILES (HIGHEST SECURITY PRIORITY)
+# ============================================================================
+# Never copy environment files containing secrets into Docker images
+.env
+.env.*
+*.env
+.env.local
+.env.development
+.env.staging
+.env.production
+.env.test
+.env.backup
+**/.env
+**/.env.*
+
+# ============================================================================
+# VERSION CONTROL
+# ============================================================================
+.git
+.gitignore
+.gitattributes
+.gitmodules
+**/.git
+
+# ============================================================================
+# PYTHON ARTIFACTS
+# ============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ============================================================================
+# TESTING & COVERAGE
+# ============================================================================
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.hypothesis/
+.pyre/
+.pytype/
+coverage.xml
+*.cover
+.cache
+nosetests.xml
+test-results/
+junit/
+
+# ============================================================================
+# IDE & EDITOR FILES
+# ============================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+.project
+.pydevproject
+.settings/
+*.code-workspace
+
+# ============================================================================
+# CI/CD & DEPLOYMENT
+# ============================================================================
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+azure-pipelines.yml
+Jenkinsfile
+.dockerignore
+docker-compose.override.yml
+docker-compose.local.yml
+
+# ============================================================================
+# DOCUMENTATION (Optional - Uncomment to Exclude)
+# ============================================================================
+# README.md
+# docs/
+# *.md
+
+# ============================================================================
+# LOGS & TEMPORARY FILES
+# ============================================================================
+*.log
+logs/
+*.tmp
+*.temp
+tmp/
+temp/
+
+# ============================================================================
+# DATABASE FILES (Local Development)
+# ============================================================================
+*.db
+*.sqlite
+*.sqlite3
+db.sqlite3
+
+# ============================================================================
+# SECRETS & CERTIFICATES
+# ============================================================================
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+secrets/
+certs/
+
+# ============================================================================
+# BACKUP FILES
+# ============================================================================
+*.bak
+*.backup
+*.old
+*~
+
+# ============================================================================
+# OS-SPECIFIC FILES
+# ============================================================================
+Thumbs.db
+Desktop.ini
+.Spotlight-V100
+.Trashes
+
+# ============================================================================
+# PROJECT-SPECIFIC EXCLUSIONS
+# ============================================================================
+# Add any project-specific files that should not be in the Docker image
+node_modules/
+frontend/node_modules/
+venv/
+.venv/
+ENV/
+env/
