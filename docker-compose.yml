@@ -43,7 +43,7 @@ services:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_USER?Variable not set}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD?Variable not set}
     ports:
-      - "127.0.0.1:8088:5432"
+      - "127.0.0.1:8088:80"
     volumes:
       - pgadmin-data:/var/lib/pgadmin
     depends_on:
