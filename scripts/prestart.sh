@@ -3,13 +3,14 @@
 set -e
 set -x
 
-# Let the DB start
+echo "Let the DB start"
 poetry run python -m app.backend_pre_start
 
-# Run migrations
+echo "Run migrations"
 poetry run alembic revision --autogenerate -m "New Migration"
 
+echo "Upgrade migrations"
 poetry run alembic upgrade head
 
-# Create initial data in DB
+echo "Create initial data in DB"
 poetry run python -m app.initial_data

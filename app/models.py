@@ -37,8 +37,8 @@ class UpdatePassword(SQLModel):
 class UserCommentRevision(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     user_id: uuid.UUID = Field(foreign_key="user.id")
-    comment_id: int = Field(foreign_key="comment.id")
-    principle_id: int = Field(foreign_key="principle.id")
+    comment_id: str = Field(foreign_key="comment.id")
+    principle_id: str = Field(foreign_key="principle.id")
     expert_opinion: str | None = None
     updated_at: datetime | None = None
     created_at: datetime | None = None
@@ -80,9 +80,10 @@ class NewPassword(SQLModel):
 
 
 class Principle(SQLModel, table=True):
-    id: int = Field(primary_key=True)
+    id: str = Field(primary_key=True)
     name: str
     definition: str
+    context_rule: str | None = None
     inclusion_criteria: str | None = None
     exclusion_criteria: str | None = None
 
@@ -91,7 +92,7 @@ class Principle(SQLModel, table=True):
 
 
 class Comment(SQLModel, table=True):
-    id: int = Field(primary_key=True)
+    id: str = Field(primary_key=True)
     preceding: str | None = None
     target: str
     following: str | None = None
@@ -102,7 +103,7 @@ class Comment(SQLModel, table=True):
         default=None, sa_column_kwargs={"nullable": True}
     )
     llm_evidence_quote: str | None = None
-    principle_id: int | None = Field(default=None, foreign_key="principle.id")
+    principle_id: str | None = Field(foreign_key="principle.id")
     principle: Principle | None = Relationship(back_populates="comments")
     revisers: list["User"] = Relationship(
         back_populates="revised_comments", link_model=UserCommentRevision
