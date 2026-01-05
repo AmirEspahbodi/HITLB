@@ -42,7 +42,7 @@ async def get_sample(
         .where(Sample.id == sample_id)
         .outerjoin(
             UserCommentRevision,
-            (UserCommentRevision.sample_id == Sample.id)
+            (UserCommentRevision.comment_id == Sample.id)
             & (UserCommentRevision.user_id == current_user.id),
         )
         .outerjoin(User, User.id == UserCommentRevision.user_id)
@@ -147,4 +147,72 @@ async def update_add_opinion(
         revision_timestamp=revision.updated_at or revision.created_at,
     )
 
+    return SampleResponse(sample=data_row)
+
+
+class ToggleSampleRevisionRequest(BaseModel):
+    is_revised: bool
+
+
+@router.patch("/{sample_id}/revision", response_model=SampleResponse)
+async def toggle_sample_revision(
+    sample_id: str,
+    session: SessionDep,
+    request: ToggleSampleRevisionRequest,
+    current_user: CurrentUser,
+):
+    statement = (
+        select(Sample, UserCommentRevision)
+        .where(Sample.id == sample_id)
+        .outerjoin(
+            UserCommentRevision,
+            (UserCommentRevision.comment_id == Sample.id)
+            & (UserCommentRevision.user_id == current_user.id),
+        )
+    )
+
+    result = session.exec(statement).first()
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Sample not found")
+
+    sample, revision = result
+
+    now = datetime.now(timezone.utc)
+
+    if revision:
+        revision.is_revise_completed = request.is_revised
+        revision.updated_at = now
+        session.add(revision)
+    else:
+        revision = UserCommentRevision(
+            user_id=current_user.id,
+            comment_id=sample.id,
+            principle_id=sample.principle_id,
+            expert_opinion="",
+            is_revise_completed=request.is_revised,
+            created_at=now,
+            updated_at=now,
+        )
+        session.add(revision)
+
+    session.commit()
+    session.refresh(revision)
+
+    data_row = DataRow(
+        id=sample.id,
+        preceding=sample.preceding,
+        target=sample.target,
+        following=sample.following,
+        A1_Score=sample.A1_Score,
+        A2_Score=sample.A2_Score,
+        A3_Score=sample.A3_Score,
+        principle_id=sample.principle_id,
+        llm_justification=sample.llm_justification,
+        llm_evidence_quote=sample.llm_evidence_quote,
+        expert_opinion=revision.expert_opinion,
+        is_revised=revision.is_revise_completed,
+        reviser_name=current_user.full_name,
+        revision_timestamp=revision.updated_at or revision.created_at,
+    )
     return SampleResponse(sample=data_row)
